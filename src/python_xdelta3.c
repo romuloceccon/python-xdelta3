@@ -27,24 +27,78 @@ typedef struct
   PyObject *source_reader;
   PyObject *output_writer;
   
+  PyObject *source_data;
+
   xd3_stream stream;
   xd3_source source;
   
-  int block_size;
-  char *source_buffer;
+  Py_ssize_t block_size;
 } Xdelta3;
 
 static PyMemberDef Xdelta3_members[] = {
   { NULL }
 };
 
-static PyObject *Xdelta3_test(Xdelta3 *self)
+static PyObject *Xdelta3_input(Xdelta3 *self, PyObject *args)
 {
-  Py_RETURN_NONE;
+  char *data;
+  Py_ssize_t data_len;
+  
+  if (!PyArg_ParseTuple(args, "s#:input", &data, &data_len))
+    return NULL;
+  
+  xd3_avail_input(&self->stream, (unsigned char *) data, data_len);
+  
+  while (1)
+  {
+    int ret = xd3_decode_input(&self->stream);
+    
+    if (ret == XD3_INPUT)
+      Py_RETURN_NONE;
+    
+    if (ret == XD3_OUTPUT)
+    {
+      PyObject *result = PyObject_CallFunction(self->output_writer, "s#",
+          self->stream.next_out, self->stream.avail_out);
+      if (!result)
+        return NULL;
+      
+      Py_DECREF(result);
+      xd3_consume_output(&self->stream);
+    }
+    else if (ret == XD3_GETSRCBLK)
+    {
+      int res;
+      char *src;
+      Py_ssize_t src_len;
+      
+      PyObject *result = PyObject_CallFunction(self->source_reader, "kn",
+          self->source.getblkno, self->block_size);
+      if (!result)
+        return NULL;
+      
+      if (PyString_AsStringAndSize(result, &src, &src_len) == -1)
+      {
+        Py_DECREF(result);
+        return NULL;
+      }
+      
+      Py_REASSIGN(self->source_data, result);
+      
+      self->source.curblkno = self->source.getblkno;
+      self->source.onblk = src_len;
+      self->source.curblk = (unsigned char *) src;
+    }
+    else if (ret != XD3_GOTHEADER && ret != XD3_WINSTART && ret != XD3_WINFINISH)
+    {
+      PyErr_SetString(Xdelta3Error, "xd3_decode_input error");
+      return NULL;
+    }
+  }
 }
   
 static PyMethodDef Xdelta3_methods[] = {
-  { "test", (PyCFunction) Xdelta3_test, METH_NOARGS, NULL },
+  { "input", (PyCFunction) Xdelta3_input, METH_VARARGS, NULL },
   { NULL }
 };
 
@@ -55,6 +109,7 @@ Xdelta3_dealloc(Xdelta3 *self)
   
   Py_XDECREF(self->source_reader);
   Py_XDECREF(self->output_writer);
+  Py_XDECREF(self->source_data);
   
   self->ob_type->tp_free((PyObject *) self);
 }
@@ -77,14 +132,8 @@ Xdelta3_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   Py_INCREF(Py_None);
   self->output_writer = Py_None;
   Py_INCREF(Py_None);
-  
-  self->source_buffer = PyMem_Malloc(self->block_size);
-  if (self->source_buffer == NULL)
-  {
-    Py_DECREF(self);
-    PyErr_NoMemory();
-    return NULL;
-  }
+  self->source_data = Py_None;
+  Py_INCREF(Py_None);
   
   memset(&config, 0, sizeof(config));
   xd3_init_config(&config, 0);
