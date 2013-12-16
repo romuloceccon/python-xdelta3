@@ -11,6 +11,12 @@
   } while (0)
   
 /*******************************************************************************
+ * xdelta3.Error
+ ******************************************************************************/
+ 
+static PyObject *Xdelta3Error;
+
+/*******************************************************************************
  * xdelta3.Xdelta3
  ******************************************************************************/
  
@@ -22,7 +28,6 @@ typedef struct
   PyObject *output_writer;
   
   xd3_stream stream;
-  xd3_config config;
   xd3_source source;
   
   int block_size;
@@ -46,8 +51,11 @@ static PyMethodDef Xdelta3_methods[] = {
 static void
 Xdelta3_dealloc(Xdelta3 *self)
 {
+  xd3_free_stream(&self->stream);
+  
   Py_XDECREF(self->source_reader);
   Py_XDECREF(self->output_writer);
+  
   self->ob_type->tp_free((PyObject *) self);
 }
 
@@ -58,12 +66,45 @@ Xdelta3_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
   self = (Xdelta3 *) type->tp_alloc(type, 0);
   
-  if (self != NULL)
+  if (self == NULL)
+    return NULL;
+  
+  xd3_config config;
+  
+  self->block_size = 32768;
+  
+  self->source_reader = Py_None;
+  Py_INCREF(Py_None);
+  self->output_writer = Py_None;
+  Py_INCREF(Py_None);
+  
+  self->source_buffer = PyMem_Malloc(self->block_size);
+  if (self->source_buffer == NULL)
   {
-    self->source_reader = Py_None;
-    Py_INCREF(Py_None);
-    self->output_writer = Py_None;
-    Py_INCREF(Py_None);
+    Py_DECREF(self);
+    PyErr_NoMemory();
+    return NULL;
+  }
+  
+  memset(&config, 0, sizeof(config));
+  xd3_init_config(&config, 0);
+  config.winsize = self->block_size;
+  if (xd3_config_stream(&self->stream, &config))
+  {
+    Py_DECREF(self);
+    PyErr_SetString(Xdelta3Error, "xd3_config_stream error");
+    return NULL;
+  }
+  
+  self->source.blksize = self->block_size;
+  self->source.curblkno = (xoff_t) -1;
+  self->source.curblk = NULL;
+
+  if (xd3_set_source(&self->stream, &self->source))
+  {
+    Py_DECREF(self);
+    PyErr_SetString(Xdelta3Error, "xd3_set_source error");
+    return NULL;
   }
 
   return (PyObject *) self;
@@ -146,4 +187,8 @@ PyMODINIT_FUNC initxdelta3(void)
   
   Py_INCREF(&Xdelta3Type);
   PyModule_AddObject(m, "Xdelta3", (PyObject *) &Xdelta3Type);
+  
+  Xdelta3Error = PyErr_NewException("xdelta3.Error", NULL, NULL);
+  Py_INCREF(Xdelta3Error);
+  PyModule_AddObject(m, "Error", Xdelta3Error);
 }
