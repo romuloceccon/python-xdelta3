@@ -182,7 +182,7 @@ static PyTypeObject SourceType = {
  * xdelta3.Stream
  ******************************************************************************/
 
-int _config_xd3_stream(xd3_stream *stream, xoff_t winsize)
+int _config_stream(xd3_stream *stream, xoff_t winsize)
 {
   xd3_config config;
 
@@ -278,7 +278,7 @@ Stream_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   if (self == NULL)
     return NULL;
   
-  if (!_config_xd3_stream(&self->stream, DEFAULT_BLOCK_SIZE))
+  if (!_config_stream(&self->stream, DEFAULT_BLOCK_SIZE))
   {
     Py_DECREF(self);
     return NULL;
@@ -301,7 +301,7 @@ Stream_init(Stream *self, PyObject *args, PyObject *kwds)
     return -1;
   
   xd3_free_stream(&self->stream);
-  if (!_config_xd3_stream(&self->stream, block_size))
+  if (!_config_stream(&self->stream, block_size))
     return -1;
   
   return 0;
