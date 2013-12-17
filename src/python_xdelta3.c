@@ -28,7 +28,7 @@
  * xdelta3.Error
  ******************************************************************************/
  
-static PyObject *Xdelta3Error;
+static PyObject *Error;
 
 /*******************************************************************************
  * xdelta3.Source
@@ -199,7 +199,7 @@ static int _config_stream(xd3_stream *stream, xoff_t winsize)
   
   if (xd3_config_stream(stream, &config))
   {
-    PyErr_SetString(Xdelta3Error, "xd3_config_stream error");
+    PyErr_SetString(Error, "xd3_config_stream error");
     return 0;
   }
   
@@ -222,7 +222,7 @@ _xxcode_input(Stream *stream, int (*func)(xd3_stream *stream),
   case XD3_WINFINISH:
     return PyLong_FromLong(r);
   default:
-    PyErr_Format(Xdelta3Error, "%s failed (%d)", func_name, r);
+    PyErr_Format(Error, "%s failed (%d)", func_name, r);
     return NULL;
   }
 }
@@ -241,7 +241,7 @@ Stream_set_source(Stream *self, PyObject *args)
   
   if (xd3_set_source(&self->stream, &source->source))
   {
-    PyErr_SetString(Xdelta3Error, "xd3_set_source error");
+    PyErr_SetString(Error, "xd3_set_source error");
     return NULL;
   }
   
@@ -455,9 +455,9 @@ PyMODINIT_FUNC init_xdelta3(void)
   Py_INCREF(&StreamType);
   PyModule_AddObject(m, "Stream", (PyObject *) &StreamType);
   
-  Xdelta3Error = PyErr_NewException("_xdelta3.Error", NULL, NULL);
-  Py_INCREF(Xdelta3Error);
-  PyModule_AddObject(m, "Error", Xdelta3Error);
+  Error = PyErr_NewException("_xdelta3.Error", NULL, NULL);
+  Py_INCREF(Error);
+  PyModule_AddObject(m, "Error", Error);
   
   INIT_LONG_CONSTANT(INPUT);
   INIT_LONG_CONSTANT(OUTPUT);
