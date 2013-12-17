@@ -344,7 +344,7 @@ static PyMethodDef xdelta3_methods[] = {
   { NULL, NULL, 0, NULL }
 };
 
-PyMODINIT_FUNC initxdelta3(void)
+PyMODINIT_FUNC init_xdelta3(void)
 {
   PyObject *m;
 
@@ -353,7 +353,7 @@ PyMODINIT_FUNC initxdelta3(void)
   if (PyType_Ready(&Xdelta3Type) < 0)
     return;
   
-  m = Py_InitModule("xdelta3", xdelta3_methods);
+  m = Py_InitModule("_xdelta3", xdelta3_methods);
   if (m == NULL)
     return;
   
@@ -363,7 +363,7 @@ PyMODINIT_FUNC initxdelta3(void)
   Py_INCREF(&Xdelta3Type);
   PyModule_AddObject(m, "Xdelta3", (PyObject *) &Xdelta3Type);
   
-  Xdelta3Error = PyErr_NewException("xdelta3.Error", NULL, NULL);
+  Xdelta3Error = PyErr_NewException("_xdelta3.Error", NULL, NULL);
   Py_INCREF(Xdelta3Error);
   PyModule_AddObject(m, "Error", Xdelta3Error);
 }

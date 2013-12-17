@@ -6,7 +6,7 @@ xdelta3_c_src = os.path.join(xdelta_dir, 'xdelta3.c')
 
 setup(name='xdelta3',
       version='0.1',
-      ext_modules=[Extension('xdelta3',
+      ext_modules=[Extension('_xdelta3',
                              ['src/python_xdelta3.c', xdelta3_c_src],
                              include_dirs=[xdelta_dir],
                              libraries=['lzma'],

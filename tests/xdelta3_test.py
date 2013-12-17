@@ -1,5 +1,5 @@
 import unittest
-import xdelta3
+import _xdelta3
 import hashlib
 import os
 
@@ -19,12 +19,12 @@ class Xdelta3TestCase(unittest.TestCase):
       os.remove('test.tmp')
       
   def test_create_stream(self):
-    xdelta3.Stream(32768)
+    _xdelta3.Stream(32768)
     
   def test_input(self):
     with open('fixtures/wget-1.11.tar') as source:
       with open('test.tmp', 'w+') as output:
-        x = xdelta3.Xdelta3(SourceReader(source).read, output.write)
+        x = _xdelta3.Xdelta3(SourceReader(source).read, output.write)
         with open('fixtures/wget-1.11-1.11.4.patch') as _input:
           while True:
             data = _input.read(16384)
