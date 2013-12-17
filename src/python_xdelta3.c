@@ -50,18 +50,14 @@ Source_set_curblk(Source *self, PyObject *args)
 {
   xoff_t block_no;
   PyObject *data;
-  char *data_str;
-  Py_ssize_t data_len;
   
-  if (!PyArg_ParseTuple(args, FMT_Xoff_t "O:set_curblk", &block_no, &data))
-    return NULL;
-    
-  if (PyBytes_AsStringAndSize(data, &data_str, &data_len) == -1)
+  if (!PyArg_ParseTuple(args, FMT_Xoff_t "O!:set_curblk", &block_no,
+      &PyBytes_Type, &data))
     return NULL;
     
   self->source.curblkno = block_no;
-  self->source.onblk = data_len;
-  self->source.curblk = (unsigned char *) data_str;
+  self->source.onblk = PyBytes_GET_SIZE(data);
+  self->source.curblk = (unsigned char *) PyBytes_AS_STRING(data);
   
   Py_REASSIGN(self->block_data, data);
   
