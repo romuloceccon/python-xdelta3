@@ -138,7 +138,7 @@ Source_init(Source *self, PyObject *args, PyObject *kwds)
 static PyTypeObject SourceType = {
   PyObject_HEAD_INIT(NULL)
   0,                                        /* ob_size*/
-  "xdelta3.Source",                         /* tp_name*/
+  "_xdelta3.Source",                        /* tp_name*/
   sizeof(Source),                           /* tp_basicsize*/
   0,                                        /* tp_itemsize*/
   (destructor) Source_dealloc,              /* tp_dealloc*/
@@ -310,7 +310,7 @@ Stream_init(Stream *self, PyObject *args, PyObject *kwds)
 static PyTypeObject StreamType = {
   PyObject_HEAD_INIT(NULL)
   0,                                        /* ob_size*/
-  "xdelta3.Stream",                         /* tp_name*/
+  "_xdelta3.Stream",                        /* tp_name*/
   sizeof(Stream),                           /* tp_basicsize*/
   0,                                        /* tp_itemsize*/
   (destructor) Stream_dealloc,              /* tp_dealloc*/
@@ -509,7 +509,7 @@ Xdelta3_init(Xdelta3 *self, PyObject *args, PyObject *kwds)
 static PyTypeObject Xdelta3Type = {
   PyObject_HEAD_INIT(NULL)
   0,                                        /* ob_size*/
-  "xdelta3.Xdelta3",                        /* tp_name*/
+  "_xdelta3.Xdelta3",                       /* tp_name*/
   sizeof(Xdelta3),                          /* tp_basicsize*/
   0,                                        /* tp_itemsize*/
   (destructor) Xdelta3_dealloc,             /* tp_dealloc*/
