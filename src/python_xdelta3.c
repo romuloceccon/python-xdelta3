@@ -303,7 +303,8 @@ Stream_src(Stream *self, void *closure)
 static PyObject *
 Stream_next_out(Stream *self, void *closure)
 {
-  return PyBytes_FromStringAndSize(self->stream.next_out, self->stream.avail_out);
+  return PyBytes_FromStringAndSize((char *) self->stream.next_out,
+      self->stream.avail_out);
 }
 
 static PyGetSetDef Stream_getset[] = {
