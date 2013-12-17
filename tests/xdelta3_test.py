@@ -11,6 +11,33 @@ class SourceReader(object):
   def read(self, block, block_size):
     self._f.seek(block * block_size)
     return self._f.read(block_size)
+    
+class Decoder(object):
+  
+  def __init__(self, reader, writer):
+    self._reader = reader
+    self._writer = writer
+    
+    self._stream = _xdelta3.Stream(32768)
+    self._source = _xdelta3.Source(32768)
+    self._stream.set_source(self._source)
+    
+  def input(self, data):
+    self._stream.avail_input(data)
+    
+    while True:
+      ret = self._stream.decode_input()
+      
+      if ret == _xdelta3.INPUT:
+        return
+        
+      if ret == _xdelta3.OUTPUT:
+        self._writer(self._stream.next_out)
+        self._stream.consume_output()
+        
+      if ret == _xdelta3.GETSRCBLK:
+        self._source.set_curblk(self._source.getblkno,
+            self._reader(self._source.getblkno, 32768))
 
 class Xdelta3TestCase(unittest.TestCase):
   
@@ -36,7 +63,7 @@ class Xdelta3TestCase(unittest.TestCase):
   def test_input(self):
     with open('fixtures/wget-1.11.tar') as source:
       with open('test.tmp', 'w+') as output:
-        x = _xdelta3.Xdelta3(SourceReader(source).read, output.write)
+        x = Decoder(SourceReader(source).read, output.write)
         with open('fixtures/wget-1.11-1.11.4.patch') as _input:
           while True:
             data = _input.read(16384)
