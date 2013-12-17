@@ -1,6 +1,7 @@
 import unittest
 import xdelta3
 import hashlib
+import os
 
 class SourceReader(object):
   
@@ -13,26 +14,33 @@ class SourceReader(object):
 
 class Xdelta3TestCase(unittest.TestCase):
   
+  def tearDown(self):
+    if os.path.exists('test.tmp'):
+      os.remove('test.tmp')
+      
   def test_test(self):
-    with open('fixtures/source.dat') as source:
-      with open('test.dat', 'w+') as output:
+    with open('fixtures/wget-1.11.tar') as source:
+      with open('test.tmp', 'w+') as output:
         x = xdelta3.Xdelta3(SourceReader(source).read, output.write)
-        with open('fixtures/input.dat') as _input:
+        with open('fixtures/wget-1.11-1.11.4.patch') as _input:
           while True:
-            data = _input.read(10000)
+            data = _input.read(16384)
             if not data:
               break
             x.input(data)
             
-    with open('test.dat') as f:
-      h1 = hashlib.new('md5')
-      h1.update(f.read())
-      
-    with open('fixtures/output.dat') as f:
-      h2 = hashlib.new('md5')
-      h2.update(f.read())
-      
-    self.assertEqual(h2.digest(), h1.digest())
+    self.assertEqual(self.calc_md5('test.tmp'),
+        self.calc_md5('fixtures/wget-1.11.4.tar'))
+    
+  def calc_md5(self, filename):
+    with open(filename) as f:
+      h = hashlib.new('md5')
+      while True:
+        s = f.read(65536)
+        if not s:
+          break
+        h.update(s)
+      return h.digest()
             
 if __name__ == '__main__':
   unittest.main()
