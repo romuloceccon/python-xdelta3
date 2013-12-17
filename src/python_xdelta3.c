@@ -45,7 +45,8 @@ static PyMemberDef Source_members[] = {
   { NULL }
 };
 
-static PyObject *Source_set_curblk(Source *self, PyObject *args)
+static PyObject *
+Source_set_curblk(Source *self, PyObject *args)
 {
   xoff_t block_no;
   PyObject *data;
@@ -83,10 +84,24 @@ static PyGetSetDef Source_getset[] = {
   { NULL }
 };
 
+static int
+Source_traverse(Source *self, visitproc visit, void *arg)
+{
+  Py_VISIT(self->block_data);
+  return 0;
+}
+
+static int
+Source_clear(Source *self)
+{
+  Py_CLEAR(self->block_data);
+  return 0;
+}
+
 static void
 Source_dealloc(Source *self)
 {
-  Py_DECREF(self->block_data);
+  Source_clear(self);
   self->ob_type->tp_free((PyObject *) self);
 }
 
@@ -145,10 +160,11 @@ static PyTypeObject SourceType = {
   0,                                        /* tp_getattro*/
   0,                                        /* tp_setattro*/
   0,                                        /* tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
+      Py_TPFLAGS_HAVE_GC,                   /* tp_flags*/
   "Source objects",                         /* tp_doc */
-  0,                                        /* tp_traverse */
-  0,                                        /* tp_clear */
+  (traverseproc) Source_traverse,           /* tp_traverse */
+  (inquiry) Source_clear,                   /* tp_clear */
   0,                                        /* tp_richcompare */
   0,                                        /* tp_weaklistoffset */
   0,                                        /* tp_iter */
