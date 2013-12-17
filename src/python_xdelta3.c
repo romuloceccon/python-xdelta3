@@ -18,9 +18,9 @@
 
 #define Py_REASSIGN(a, b) \
   do { \
-    PyObject *tmp = a; \
+    PyObject *tmp = (void *) a; \
     Py_INCREF(b); \
-    a = b; \
+    a = (void *) b; \
     Py_DECREF(tmp); \
   } while (0)
   
