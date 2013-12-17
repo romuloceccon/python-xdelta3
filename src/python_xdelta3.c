@@ -35,7 +35,7 @@ static PyObject *Xdelta3Error;
 typedef struct
 {
   PyObject_HEAD
-  xd3_source _source;
+  xd3_source source;
 } Source;
 
 static PyMemberDef Source_members[] = {
@@ -49,7 +49,7 @@ static PyMethodDef Source_methods[] = {
 static PyObject *
 Source_getblkno(Source *self, void *closure)
 {
-  return PyLong_FromXoff_t(self->_source.getblkno);
+  return PyLong_FromXoff_t(self->source.getblkno);
 }
 
 static PyGetSetDef Source_getset[] = {
@@ -73,8 +73,8 @@ Source_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   if (self == NULL)
     return NULL;
   
-  self->_source.blksize = DEFAULT_BLOCK_SIZE;
-  self->_source.curblkno = (xoff_t) -1;
+  self->source.blksize = DEFAULT_BLOCK_SIZE;
+  self->source.curblkno = (xoff_t) -1;
   
   return (PyObject *) self;
 }
@@ -89,7 +89,7 @@ Source_init(Source *self, PyObject *args, PyObject *kwds)
       &block_size))
     return -1;
   
-  self->_source.blksize = block_size;
+  self->source.blksize = block_size;
   
   return 0;
 }
@@ -160,7 +160,7 @@ int _config_xd3_stream(xd3_stream *stream, xoff_t winsize)
 typedef struct
 {
   PyObject_HEAD
-  xd3_stream _stream;
+  xd3_stream stream;
 } Stream;
 
 static PyMemberDef Stream_members[] = {
@@ -174,7 +174,7 @@ static PyMethodDef Stream_methods[] = {
 static void
 Stream_dealloc(Stream *self)
 {
-  xd3_free_stream(&self->_stream);
+  xd3_free_stream(&self->stream);
   self->ob_type->tp_free((PyObject *) self);
 }
 
@@ -188,7 +188,7 @@ Stream_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   if (self == NULL)
     return NULL;
   
-  if (!_config_xd3_stream(&self->_stream, DEFAULT_BLOCK_SIZE))
+  if (!_config_xd3_stream(&self->stream, DEFAULT_BLOCK_SIZE))
   {
     Py_DECREF(self);
     return NULL;
@@ -207,8 +207,8 @@ Stream_init(Stream *self, PyObject *args, PyObject *kwds)
       &block_size))
     return -1;
   
-  xd3_free_stream(&self->_stream);
-  if (!_config_xd3_stream(&self->_stream, block_size))
+  xd3_free_stream(&self->stream);
+  if (!_config_xd3_stream(&self->stream, block_size))
     return -1;
   
   return 0;
