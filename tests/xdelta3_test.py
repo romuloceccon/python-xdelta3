@@ -24,6 +24,8 @@ class Xdelta3TestCase(unittest.TestCase):
   def test_create_source(self):
     s = _xdelta3.Source(32768)
     self.assertEqual(0, s.getblkno)
+    s.set_curblk(10, "x" * 1024)
+    s.set_curblk(11, "y" * 1024)
     
   def test_input(self):
     with open('fixtures/wget-1.11.tar') as source:

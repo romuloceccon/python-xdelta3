@@ -7,9 +7,11 @@
 #if SIZEOF_XOFF_T == 8
 #  define PyLong_FromXoff_t PyLong_FromUnsignedLongLong
 #  define PyLong_AsXoff_t PyLong_AsUnsignedLongLong
+#  define FMT_Xoff_t "K"
 #elif SIZEOF_XOFF_T == 4
 #  define PyLong_FromXoff_t PyLong_FromUnsignedLong
 #  define PyLong_AsXoff_t PyLong_AsUnsignedLong
+#  define FMT_Xoff_t "k"
 #else
 #  error "Invalid SIZEOF_XOFF_T definition"
 #endif
@@ -19,7 +21,7 @@
     PyObject *tmp = a; \
     Py_INCREF(b); \
     a = b; \
-    Py_XDECREF(tmp); \
+    Py_DECREF(tmp); \
   } while (0)
   
 /*******************************************************************************
@@ -36,13 +38,37 @@ typedef struct
 {
   PyObject_HEAD
   xd3_source source;
+  PyObject *block_data;
 } Source;
 
 static PyMemberDef Source_members[] = {
   { NULL }
 };
 
+static PyObject *Source_set_curblk(Source *self, PyObject *args)
+{
+  xoff_t block_no;
+  PyObject *data;
+  char *data_str;
+  Py_ssize_t data_len;
+  
+  if (!PyArg_ParseTuple(args, FMT_Xoff_t "O:set_curblk", &block_no, &data))
+    return NULL;
+    
+  if (PyBytes_AsStringAndSize(data, &data_str, &data_len) == -1)
+    return NULL;
+    
+  self->source.curblkno = block_no;
+  self->source.onblk = data_len;
+  self->source.curblk = (unsigned char *) data_str;
+  
+  Py_REASSIGN(self->block_data, data);
+  
+  Py_RETURN_NONE;
+}
+
 static PyMethodDef Source_methods[] = {
+  { "set_curblk", (PyCFunction) Source_set_curblk, METH_VARARGS, NULL },
   { NULL }
 };
 
@@ -60,6 +86,7 @@ static PyGetSetDef Source_getset[] = {
 static void
 Source_dealloc(Source *self)
 {
+  Py_DECREF(self->block_data);
   self->ob_type->tp_free((PyObject *) self);
 }
 
@@ -76,6 +103,9 @@ Source_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   self->source.blksize = DEFAULT_BLOCK_SIZE;
   self->source.curblkno = (xoff_t) -1;
   
+  self->block_data = Py_None;
+  Py_INCREF(Py_None);
+  
   return (PyObject *) self;
 }
 
@@ -83,10 +113,10 @@ static int
 Source_init(Source *self, PyObject *args, PyObject *kwds)
 {
   static char *keywords[] = { "winsize", NULL };
-  Py_ssize_t block_size = DEFAULT_BLOCK_SIZE;
+  xoff_t block_size = DEFAULT_BLOCK_SIZE;
   
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|n:__init__", keywords,
-      &block_size))
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|" FMT_Xoff_t ":__init__",
+      keywords, &block_size))
     return -1;
   
   self->source.blksize = block_size;
