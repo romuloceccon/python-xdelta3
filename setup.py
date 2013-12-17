@@ -17,5 +17,6 @@ setup(name='xdelta3',
                              define_macros=[('HAVE_CONFIG_H', None),
                                             ('NOT_MAIN', None),
                                             ('XD3_POSIX', '1'),
+                                            ('EXTERNAL_COMPRESSION', '0'),
                                             ('XD3_USE_LARGEFILE64', '1')])],
       )
