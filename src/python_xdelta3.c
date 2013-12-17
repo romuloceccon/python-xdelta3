@@ -203,19 +203,67 @@ typedef struct
 {
   PyObject_HEAD
   xd3_stream stream;
+  PyObject *source;
 } Stream;
 
 static PyMemberDef Stream_members[] = {
   { NULL }
 };
 
+static PyObject *
+Stream_set_source(Stream *self, PyObject *args)
+{
+  Source *source;
+  
+  if (!PyArg_ParseTuple(args, "O!:set_source", &SourceType, &source))
+    return NULL;
+  
+  if (xd3_set_source(&self->stream, &source->source))
+  {
+    PyErr_SetString(Xdelta3Error, "xd3_set_source error");
+    return NULL;
+  }
+  
+  Py_REASSIGN(self->source, source);
+  
+  Py_RETURN_NONE;
+}
+
 static PyMethodDef Stream_methods[] = {
+  { "set_source", (PyCFunction) Stream_set_source, METH_VARARGS, NULL },
   { NULL }
 };
+
+static PyObject *
+Stream_src(Stream *self, void *closure)
+{
+  Py_INCREF(self->source);
+  return self->source;
+}
+
+static PyGetSetDef Stream_getset[] = {
+  { "src", (getter) Stream_src, NULL, NULL, NULL },
+  { NULL }
+};
+
+static int
+Stream_traverse(Stream *self, visitproc visit, void *arg)
+{
+  Py_VISIT(self->source);
+  return 0;
+}
+
+static int
+Stream_clear(Stream *self)
+{
+  Py_CLEAR(self->source);
+  return 0;
+}
 
 static void
 Stream_dealloc(Stream *self)
 {
+  Stream_clear(self);
   xd3_free_stream(&self->stream);
   self->ob_type->tp_free((PyObject *) self);
 }
@@ -235,6 +283,9 @@ Stream_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     Py_DECREF(self);
     return NULL;
   }
+  
+  self->source = Py_None;
+  Py_INCREF(Py_None);
   
   return (PyObject *) self;
 }
@@ -277,17 +328,18 @@ static PyTypeObject StreamType = {
   0,                                        /* tp_getattro*/
   0,                                        /* tp_setattro*/
   0,                                        /* tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
+      Py_TPFLAGS_HAVE_GC,                   /* tp_flags*/
   "Stream objects",                         /* tp_doc */
-  0,                                        /* tp_traverse */
-  0,                                        /* tp_clear */
+  (traverseproc) Stream_traverse,           /* tp_traverse */
+  (inquiry) Stream_clear,                   /* tp_clear */
   0,                                        /* tp_richcompare */
   0,                                        /* tp_weaklistoffset */
   0,                                        /* tp_iter */
   0,                                        /* tp_iternext */
   Stream_methods,                           /* tp_methods */
   Stream_members,                           /* tp_members */
-  0,                                        /* tp_getset */
+  Stream_getset,                            /* tp_getset */
   0,                                        /* tp_base */
   0,                                        /* tp_dict */
   0,                                        /* tp_descr_get */

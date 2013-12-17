@@ -21,6 +21,12 @@ class Xdelta3TestCase(unittest.TestCase):
   def test_create_stream(self):
     _xdelta3.Stream(32768)
     
+  def test_set_source(self):
+    stream = _xdelta3.Stream(32768)
+    source = _xdelta3.Source(32768)
+    stream.set_source(source)
+    self.assertEqual(source, stream.src)
+    
   def test_create_source(self):
     s = _xdelta3.Source(32768)
     self.assertEqual(0, s.getblkno)
