@@ -2,6 +2,8 @@
 #include <Python.h>
 #include <structmember.h>
 
+#define DEFAULT_BLOCK_SIZE 32768
+
 #define Py_REASSIGN(a, b) \
   do { \
     PyObject *tmp = a; \
@@ -15,6 +17,126 @@
  ******************************************************************************/
  
 static PyObject *Xdelta3Error;
+
+/*******************************************************************************
+ * xdelta3.Stream
+ ******************************************************************************/
+
+int _config_xd3_stream(xd3_stream *stream, xoff_t winsize)
+{
+  xd3_config config;
+
+  memset(&config, 0, sizeof(config));
+  xd3_init_config(&config, 0);
+  config.winsize = winsize;
+  
+  if (xd3_config_stream(stream, &config))
+  {
+    PyErr_SetString(Xdelta3Error, "xd3_config_stream error");
+    return 0;
+  }
+  
+  return 1;
+}
+
+typedef struct
+{
+  PyObject_HEAD
+  xd3_stream _stream;
+} Stream;
+
+static PyMemberDef Stream_members[] = {
+  { NULL }
+};
+
+static PyMethodDef Stream_methods[] = {
+  { NULL }
+};
+
+static void
+Stream_dealloc(Stream *self)
+{
+  xd3_free_stream(&self->_stream);
+  self->ob_type->tp_free((PyObject *) self);
+}
+
+static PyObject *
+Stream_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+  Stream *self;
+
+  self = (Stream *) type->tp_alloc(type, 0);
+  
+  if (self == NULL)
+    return NULL;
+  
+  if (!_config_xd3_stream(&self->_stream, DEFAULT_BLOCK_SIZE))
+  {
+    Py_DECREF(self);
+    return NULL;
+  }
+  
+  return (PyObject *) self;
+}
+
+static int
+Stream_init(Stream *self, PyObject *args, PyObject *kwds)
+{
+  static char *keywords[] = { "winsize", NULL };
+  Py_ssize_t block_size = DEFAULT_BLOCK_SIZE;
+  
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|n:__init__", keywords,
+      &block_size))
+    return -1;
+  
+  xd3_free_stream(&self->_stream);
+  if (!_config_xd3_stream(&self->_stream, block_size))
+    return -1;
+  
+  return 0;
+}
+
+static PyTypeObject StreamType = {
+  PyObject_HEAD_INIT(NULL)
+  0,                                        /* ob_size*/
+  "xdelta3.Stream",                         /* tp_name*/
+  sizeof(Stream),                           /* tp_basicsize*/
+  0,                                        /* tp_itemsize*/
+  (destructor) Stream_dealloc,              /* tp_dealloc*/
+  0,                                        /* tp_print*/
+  0,                                        /* tp_getattr*/
+  0,                                        /* tp_setattr*/
+  0,                                        /* tp_compare*/
+  0,                                        /* tp_repr*/
+  0,                                        /* tp_as_number*/
+  0,                                        /* tp_as_sequence*/
+  0,                                        /* tp_as_mapping*/
+  0,                                        /* tp_hash */
+  0,                                        /* tp_call*/
+  0,                                        /* tp_str*/
+  0,                                        /* tp_getattro*/
+  0,                                        /* tp_setattro*/
+  0,                                        /* tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
+  "Stream objects",                         /* tp_doc */
+  0,                                        /* tp_traverse */
+  0,                                        /* tp_clear */
+  0,                                        /* tp_richcompare */
+  0,                                        /* tp_weaklistoffset */
+  0,                                        /* tp_iter */
+  0,                                        /* tp_iternext */
+  Stream_methods,                           /* tp_methods */
+  Stream_members,                           /* tp_members */
+  0,                                        /* tp_getset */
+  0,                                        /* tp_base */
+  0,                                        /* tp_dict */
+  0,                                        /* tp_descr_get */
+  0,                                        /* tp_descr_set */
+  0,                                        /* tp_dictoffset */
+  (initproc) Stream_init,                   /* tp_init */
+  0,                                        /* tp_alloc */
+  Stream_new,                               /* tp_new */
+};
 
 /*******************************************************************************
  * xdelta3.Xdelta3
@@ -68,7 +190,6 @@ static PyObject *Xdelta3_input(Xdelta3 *self, PyObject *args)
     }
     else if (ret == XD3_GETSRCBLK)
     {
-      int res;
       char *src;
       Py_ssize_t src_len;
       
@@ -227,12 +348,17 @@ PyMODINIT_FUNC initxdelta3(void)
 {
   PyObject *m;
 
+  if (PyType_Ready(&StreamType) < 0)
+    return;
   if (PyType_Ready(&Xdelta3Type) < 0)
     return;
   
   m = Py_InitModule("xdelta3", xdelta3_methods);
   if (m == NULL)
     return;
+  
+  Py_INCREF(&StreamType);
+  PyModule_AddObject(m, "Stream", (PyObject *) &StreamType);
   
   Py_INCREF(&Xdelta3Type);
   PyModule_AddObject(m, "Xdelta3", (PyObject *) &Xdelta3Type);

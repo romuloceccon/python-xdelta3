@@ -18,7 +18,10 @@ class Xdelta3TestCase(unittest.TestCase):
     if os.path.exists('test.tmp'):
       os.remove('test.tmp')
       
-  def test_test(self):
+  def test_create_stream(self):
+    xdelta3.Stream(32768)
+    
+  def test_input(self):
     with open('fixtures/wget-1.11.tar') as source:
       with open('test.tmp', 'w+') as output:
         x = xdelta3.Xdelta3(SourceReader(source).read, output.write)
