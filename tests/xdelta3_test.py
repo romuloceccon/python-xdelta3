@@ -21,6 +21,10 @@ class Xdelta3TestCase(unittest.TestCase):
   def test_create_stream(self):
     _xdelta3.Stream(32768)
     
+  def test_create_source(self):
+    s = _xdelta3.Source(32768)
+    self.assertEqual(0, s.getblkno)
+    
   def test_input(self):
     with open('fixtures/wget-1.11.tar') as source:
       with open('test.tmp', 'w+') as output:

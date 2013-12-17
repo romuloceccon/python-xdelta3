@@ -4,6 +4,16 @@
 
 #define DEFAULT_BLOCK_SIZE 32768
 
+#if SIZEOF_XOFF_T == 8
+#  define PyLong_FromXoff_t PyLong_FromUnsignedLongLong
+#  define PyLong_AsXoff_t PyLong_AsUnsignedLongLong
+#elif SIZEOF_XOFF_T == 4
+#  define PyLong_FromXoff_t PyLong_FromUnsignedLong
+#  define PyLong_AsXoff_t PyLong_AsUnsignedLong
+#else
+#  error "Invalid SIZEOF_XOFF_T definition"
+#endif
+
 #define Py_REASSIGN(a, b) \
   do { \
     PyObject *tmp = a; \
@@ -17,6 +27,114 @@
  ******************************************************************************/
  
 static PyObject *Xdelta3Error;
+
+/*******************************************************************************
+ * xdelta3.Source
+ ******************************************************************************/
+
+typedef struct
+{
+  PyObject_HEAD
+  xd3_source _source;
+} Source;
+
+static PyMemberDef Source_members[] = {
+  { NULL }
+};
+
+static PyMethodDef Source_methods[] = {
+  { NULL }
+};
+
+static PyObject *
+Source_getblkno(Source *self, void *closure)
+{
+  return PyLong_FromXoff_t(self->_source.getblkno);
+}
+
+static PyGetSetDef Source_getset[] = {
+  { "getblkno", (getter) Source_getblkno, NULL, NULL, NULL },
+  { NULL }
+};
+
+static void
+Source_dealloc(Source *self)
+{
+  self->ob_type->tp_free((PyObject *) self);
+}
+
+static PyObject *
+Source_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+  Source *self;
+
+  self = (Source *) type->tp_alloc(type, 0);
+  
+  if (self == NULL)
+    return NULL;
+  
+  self->_source.blksize = DEFAULT_BLOCK_SIZE;
+  self->_source.curblkno = (xoff_t) -1;
+  
+  return (PyObject *) self;
+}
+
+static int
+Source_init(Source *self, PyObject *args, PyObject *kwds)
+{
+  static char *keywords[] = { "winsize", NULL };
+  Py_ssize_t block_size = DEFAULT_BLOCK_SIZE;
+  
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|n:__init__", keywords,
+      &block_size))
+    return -1;
+  
+  self->_source.blksize = block_size;
+  
+  return 0;
+}
+
+static PyTypeObject SourceType = {
+  PyObject_HEAD_INIT(NULL)
+  0,                                        /* ob_size*/
+  "xdelta3.Source",                         /* tp_name*/
+  sizeof(Source),                           /* tp_basicsize*/
+  0,                                        /* tp_itemsize*/
+  (destructor) Source_dealloc,              /* tp_dealloc*/
+  0,                                        /* tp_print*/
+  0,                                        /* tp_getattr*/
+  0,                                        /* tp_setattr*/
+  0,                                        /* tp_compare*/
+  0,                                        /* tp_repr*/
+  0,                                        /* tp_as_number*/
+  0,                                        /* tp_as_sequence*/
+  0,                                        /* tp_as_mapping*/
+  0,                                        /* tp_hash */
+  0,                                        /* tp_call*/
+  0,                                        /* tp_str*/
+  0,                                        /* tp_getattro*/
+  0,                                        /* tp_setattro*/
+  0,                                        /* tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
+  "Source objects",                         /* tp_doc */
+  0,                                        /* tp_traverse */
+  0,                                        /* tp_clear */
+  0,                                        /* tp_richcompare */
+  0,                                        /* tp_weaklistoffset */
+  0,                                        /* tp_iter */
+  0,                                        /* tp_iternext */
+  Source_methods,                           /* tp_methods */
+  Source_members,                           /* tp_members */
+  Source_getset,                            /* tp_getset */
+  0,                                        /* tp_base */
+  0,                                        /* tp_dict */
+  0,                                        /* tp_descr_get */
+  0,                                        /* tp_descr_set */
+  0,                                        /* tp_dictoffset */
+  (initproc) Source_init,                   /* tp_init */
+  0,                                        /* tp_alloc */
+  Source_new,                               /* tp_new */
+};
 
 /*******************************************************************************
  * xdelta3.Stream
@@ -348,6 +466,8 @@ PyMODINIT_FUNC init_xdelta3(void)
 {
   PyObject *m;
 
+  if (PyType_Ready(&SourceType) < 0)
+    return;
   if (PyType_Ready(&StreamType) < 0)
     return;
   if (PyType_Ready(&Xdelta3Type) < 0)
@@ -356,6 +476,9 @@ PyMODINIT_FUNC init_xdelta3(void)
   m = Py_InitModule("_xdelta3", xdelta3_methods);
   if (m == NULL)
     return;
+  
+  Py_INCREF(&SourceType);
+  PyModule_AddObject(m, "Source", (PyObject *) &SourceType);
   
   Py_INCREF(&StreamType);
   PyModule_AddObject(m, "Stream", (PyObject *) &StreamType);
