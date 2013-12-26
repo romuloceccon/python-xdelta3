@@ -1,7 +1,5 @@
 import _xdelta3
 
-BLOCK_SIZE = 65536 * 2
-
 class Decoder(object):
   
   def __init__(self, reader, writer):
@@ -9,7 +7,7 @@ class Decoder(object):
     self._writer = writer
     
     self._stream = _xdelta3.Stream()
-    self._source = _xdelta3.Source(BLOCK_SIZE)
+    self._source = _xdelta3.Source()
     self._stream.set_source(self._source)
     
   def input(self, data):
@@ -27,4 +25,4 @@ class Decoder(object):
         
       if ret == _xdelta3.GETSRCBLK:
         self._source.set_curblk(self._source.getblkno,
-            self._reader(self._source.getblkno, BLOCK_SIZE))
+            self._reader(self._source.getblkno, self._source.blksize))

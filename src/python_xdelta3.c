@@ -68,12 +68,19 @@ static PyMethodDef Source_methods[] = {
 };
 
 static PyObject *
+Source_blksize(Source *self, void *closure)
+{
+  return PyLong_FromUnsignedLong(self->source.blksize);
+}
+
+static PyObject *
 Source_getblkno(Source *self, void *closure)
 {
   return PyLong_FromXoff_t(self->source.getblkno);
 }
 
 static PyGetSetDef Source_getset[] = {
+  { "blksize", (getter) Source_blksize, NULL, NULL, NULL },
   { "getblkno", (getter) Source_getblkno, NULL, NULL, NULL },
   { NULL }
 };
