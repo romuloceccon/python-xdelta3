@@ -48,6 +48,24 @@ class Xdelta3TestCase(unittest.TestCase):
     self.assertEqual(self.calc_md5('test.tmp'),
         self.calc_md5('fixtures/wget-1.11.4.tar'))
     
+  def test_encode(self):
+    winsize = 32768
+    
+    with open('fixtures/wget-1.11.tar') as source:
+      with open('test.tmp', 'w+') as output:
+        x = xdelta3.Encoder(SourceReader(source).read, output.write, winsize)
+        with open('fixtures/wget-1.11.4.tar') as _input:
+          while True:
+            data = _input.read(winsize)
+            if not data:
+              x.input('', True)
+              break
+            x.input(data)
+            
+    sz = os.path.getsize('test.tmp')
+    self.assert_(sz > 100000)
+    self.assert_(sz < 150000)
+    
   def calc_md5(self, filename):
     with open(filename) as f:
       h = hashlib.new('md5')
