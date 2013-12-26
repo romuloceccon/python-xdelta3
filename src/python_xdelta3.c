@@ -2,8 +2,6 @@
 #include <Python.h>
 #include <structmember.h>
 
-#define DEFAULT_BLOCK_SIZE 32768
-
 #if SIZEOF_XOFF_T == 8
 #  define PyLong_FromXoff_t PyLong_FromUnsignedLongLong
 #  define PyLong_AsXoff_t PyLong_AsUnsignedLongLong
@@ -111,7 +109,7 @@ Source_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   if (self == NULL)
     return NULL;
   
-  self->source.blksize = DEFAULT_BLOCK_SIZE;
+  self->source.blksize = XD3_DEFAULT_SRCWINSZ;
   self->source.curblkno = (xoff_t) -1;
   
   self->block_data = Py_None;
@@ -124,7 +122,7 @@ static int
 Source_init(Source *self, PyObject *args, PyObject *kwds)
 {
   static char *keywords[] = { "winsize", NULL };
-  xoff_t block_size = DEFAULT_BLOCK_SIZE;
+  xoff_t block_size = XD3_DEFAULT_SRCWINSZ;
   
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|" FMT_Xoff_t ":__init__",
       keywords, &block_size))
@@ -345,7 +343,7 @@ Stream_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   if (self == NULL)
     return NULL;
   
-  if (!_config_stream(&self->stream, DEFAULT_BLOCK_SIZE))
+  if (!_config_stream(&self->stream, XD3_DEFAULT_WINSIZE))
   {
     Py_DECREF(self);
     return NULL;
@@ -361,7 +359,7 @@ static int
 Stream_init(Stream *self, PyObject *args, PyObject *kwds)
 {
   static char *keywords[] = { "winsize", NULL };
-  Py_ssize_t block_size = DEFAULT_BLOCK_SIZE;
+  Py_ssize_t block_size = XD3_DEFAULT_WINSIZE;
   
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|n:__init__", keywords,
       &block_size))

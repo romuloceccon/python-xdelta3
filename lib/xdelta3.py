@@ -8,7 +8,7 @@ class Decoder(object):
     self._reader = reader
     self._writer = writer
     
-    self._stream = _xdelta3.Stream(BLOCK_SIZE)
+    self._stream = _xdelta3.Stream()
     self._source = _xdelta3.Source(BLOCK_SIZE)
     self._stream.set_source(self._source)
     
