@@ -34,7 +34,7 @@ class Xdelta3TestCase(unittest.TestCase):
     s.set_curblk(10, "x" * 1024)
     s.set_curblk(11, "y" * 1024)
     
-  def test_input(self):
+  def test_decode(self):
     with open('fixtures/wget-1.11.tar') as source:
       with open('test.tmp', 'w+') as output:
         x = xdelta3.Decoder(SourceReader(source).read, output.write)
