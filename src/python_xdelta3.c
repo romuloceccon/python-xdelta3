@@ -189,7 +189,7 @@ typedef struct
   PyObject *source;
 } Stream;
 
-static int _config_stream(xd3_stream *stream, xoff_t winsize, int flags)
+static int _config_stream(xd3_stream *stream, usize_t winsize, int flags)
 {
   xd3_config config;
 
@@ -379,15 +379,15 @@ static int
 Stream_init(Stream *self, PyObject *args, PyObject *kwds)
 {
   static char *keywords[] = { "winsize", "flags", NULL };
-  Py_ssize_t block_size = XD3_DEFAULT_WINSIZE;
+  usize_t winsize = XD3_DEFAULT_WINSIZE;
   int flags = 0;
   
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ni:__init__", keywords,
-      &block_size, &flags))
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ki:__init__", keywords,
+      &winsize, &flags))
     return -1;
   
   xd3_free_stream(&self->stream);
-  if (!_config_stream(&self->stream, block_size, flags))
+  if (!_config_stream(&self->stream, winsize, flags))
     return -1;
   
   return 0;
