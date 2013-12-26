@@ -189,13 +189,14 @@ typedef struct
   PyObject *source;
 } Stream;
 
-static int _config_stream(xd3_stream *stream, xoff_t winsize)
+static int _config_stream(xd3_stream *stream, xoff_t winsize, int flags)
 {
   xd3_config config;
 
   memset(&config, 0, sizeof(config));
   xd3_init_config(&config, 0);
   config.winsize = winsize;
+  config.flags = flags;
   
   if (xd3_config_stream(stream, &config))
   {
@@ -294,6 +295,22 @@ static PyMethodDef Stream_methods[] = {
 };
 
 static PyObject *
+Stream_flags(Stream *self, void *closure)
+{
+  return PyInt_FromLong(self->stream.flags);
+}
+
+static int
+Stream_set_flags(Stream *self, PyObject *value, void *closure)
+{
+  int val = PyInt_AsLong(value);
+  if (val == -1 && PyErr_Occurred())
+    return -1;
+  self->stream.flags = val;
+  return 0;
+}
+
+static PyObject *
 Stream_src(Stream *self, void *closure)
 {
   Py_INCREF(self->source);
@@ -308,6 +325,7 @@ Stream_next_out(Stream *self, void *closure)
 }
 
 static PyGetSetDef Stream_getset[] = {
+  { "flags", (getter) Stream_flags, (setter) Stream_set_flags, NULL, NULL },
   { "src", (getter) Stream_src, NULL, NULL, NULL },
   { "next_out", (getter) Stream_next_out, NULL, NULL, NULL },
   { NULL }
@@ -345,7 +363,7 @@ Stream_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   if (self == NULL)
     return NULL;
   
-  if (!_config_stream(&self->stream, XD3_DEFAULT_WINSIZE))
+  if (!_config_stream(&self->stream, XD3_DEFAULT_WINSIZE, 0))
   {
     Py_DECREF(self);
     return NULL;
@@ -360,15 +378,16 @@ Stream_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 Stream_init(Stream *self, PyObject *args, PyObject *kwds)
 {
-  static char *keywords[] = { "winsize", NULL };
+  static char *keywords[] = { "winsize", "flags", NULL };
   Py_ssize_t block_size = XD3_DEFAULT_WINSIZE;
+  int flags = 0;
   
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|n:__init__", keywords,
-      &block_size))
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ni:__init__", keywords,
+      &block_size, &flags))
     return -1;
   
   xd3_free_stream(&self->stream);
-  if (!_config_stream(&self->stream, block_size))
+  if (!_config_stream(&self->stream, block_size, flags))
     return -1;
   
   return 0;
