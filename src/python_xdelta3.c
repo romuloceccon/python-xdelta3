@@ -110,6 +110,7 @@ Source_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return NULL;
   
   self->source.blksize = XD3_DEFAULT_SRCWINSZ;
+  self->source.max_winsize = XD3_DEFAULT_SRCWINSZ;
   self->source.curblkno = (xoff_t) -1;
   
   self->block_data = Py_None;
@@ -121,14 +122,15 @@ Source_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 Source_init(Source *self, PyObject *args, PyObject *kwds)
 {
-  static char *keywords[] = { "winsize", NULL };
-  xoff_t block_size = XD3_DEFAULT_SRCWINSZ;
+  static char *keywords[] = { "winsize", "max_winsize", NULL };
+  xoff_t winsize = XD3_DEFAULT_SRCWINSZ, max_winsize = XD3_DEFAULT_SRCWINSZ;
   
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|" FMT_Xoff_t ":__init__",
-      keywords, &block_size))
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|" FMT_Xoff_t FMT_Xoff_t \
+      ":__init__", keywords, &winsize, &max_winsize))
     return -1;
   
-  self->source.blksize = block_size;
+  self->source.blksize = winsize;
+  self->source.max_winsize = max_winsize;
   
   return 0;
 }
