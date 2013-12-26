@@ -456,6 +456,30 @@ static PyObject *_xdelta3_GOTHEADER;
 static PyObject *_xdelta3_WINSTART;
 static PyObject *_xdelta3_WINFINISH;
 
+static PyObject *_xdelta3_JUST_HDR;
+static PyObject *_xdelta3_SKIP_WINDOW;
+static PyObject *_xdelta3_SKIP_EMIT;
+static PyObject *_xdelta3_FLUSH;
+static PyObject *_xdelta3_SEC_DJW;
+static PyObject *_xdelta3_SEC_FGK;
+static PyObject *_xdelta3_SEC_LZMA;
+static PyObject *_xdelta3_SEC_TYPE;
+static PyObject *_xdelta3_SEC_NODATA;
+static PyObject *_xdelta3_SEC_NOINST;
+static PyObject *_xdelta3_SEC_NOADDR;
+static PyObject *_xdelta3_SEC_NOALL;
+static PyObject *_xdelta3_ADLER32;
+static PyObject *_xdelta3_ADLER32_NOVER;
+static PyObject *_xdelta3_ALT_CODE_TABLE;
+static PyObject *_xdelta3_NOCOMPRESS;
+static PyObject *_xdelta3_BEGREEDY;
+static PyObject *_xdelta3_ADLER32_RECODE;
+static PyObject *_xdelta3_COMPLEVEL_1;
+static PyObject *_xdelta3_COMPLEVEL_2;
+static PyObject *_xdelta3_COMPLEVEL_3;
+static PyObject *_xdelta3_COMPLEVEL_6;
+static PyObject *_xdelta3_COMPLEVEL_9;
+
 PyMODINIT_FUNC init_xdelta3(void)
 {
   PyObject *m;
@@ -485,4 +509,28 @@ PyMODINIT_FUNC init_xdelta3(void)
   INIT_LONG_CONSTANT(GOTHEADER);
   INIT_LONG_CONSTANT(WINSTART);
   INIT_LONG_CONSTANT(WINFINISH);
+  
+  INIT_LONG_CONSTANT(JUST_HDR);
+  INIT_LONG_CONSTANT(SKIP_WINDOW);
+  INIT_LONG_CONSTANT(SKIP_EMIT);
+  INIT_LONG_CONSTANT(FLUSH);
+  INIT_LONG_CONSTANT(SEC_DJW);
+  INIT_LONG_CONSTANT(SEC_FGK);
+  INIT_LONG_CONSTANT(SEC_LZMA);
+  INIT_LONG_CONSTANT(SEC_TYPE);
+  INIT_LONG_CONSTANT(SEC_NODATA);
+  INIT_LONG_CONSTANT(SEC_NOINST);
+  INIT_LONG_CONSTANT(SEC_NOADDR);
+  INIT_LONG_CONSTANT(SEC_NOALL);
+  INIT_LONG_CONSTANT(ADLER32);
+  INIT_LONG_CONSTANT(ADLER32_NOVER);
+  INIT_LONG_CONSTANT(ALT_CODE_TABLE);
+  INIT_LONG_CONSTANT(NOCOMPRESS);
+  INIT_LONG_CONSTANT(BEGREEDY);
+  INIT_LONG_CONSTANT(ADLER32_RECODE);
+  INIT_LONG_CONSTANT(COMPLEVEL_1);
+  INIT_LONG_CONSTANT(COMPLEVEL_2);
+  INIT_LONG_CONSTANT(COMPLEVEL_3);
+  INIT_LONG_CONSTANT(COMPLEVEL_6);
+  INIT_LONG_CONSTANT(COMPLEVEL_9);
 }
