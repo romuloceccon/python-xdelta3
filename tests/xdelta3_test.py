@@ -42,6 +42,7 @@ class Xdelta3TestCase(unittest.TestCase):
           while True:
             data = _input.read(16384)
             if not data:
+              x.input('', True)
               break
             x.input(data)
             

@@ -10,7 +10,13 @@ class Decoder(object):
     self._source = _xdelta3.Source()
     self._stream.set_source(self._source)
     
-  def input(self, data):
+  def input(self, data, flush=False):
+    if flush:
+      flag = _xdelta3.FLUSH
+    else:
+      flag = 0
+
+    self._stream.flags = self._stream.flags & ~_xdelta3.FLUSH | flag
     self._stream.avail_input(data)
     
     while True:
