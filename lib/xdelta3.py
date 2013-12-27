@@ -1,5 +1,7 @@
 import _xdelta3
 
+Error = _xdelta3.Error
+
 class Decoder(object):
   
   def __init__(self, reader, writer):
